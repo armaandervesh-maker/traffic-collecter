@@ -1,0 +1,34 @@
+name: Traffic Collector
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+
+  workflow_dispatch:
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Run one traffic collection cycle
+        env:
+          COLLECT_URL: ${{ secrets.COLLECT_URL }}
+          COLLECTOR_TRIGGER_SECRET: ${{ secrets.COLLECTOR_TRIGGER_SECRET }}
+        run: |
+          if [ -z "$COLLECT_URL" ]; then
+            echo "COLLECT_URL secret is missing"
+            exit 1
+          fi
+
+          if [ -z "$COLLECTOR_TRIGGER_SECRET" ]; then
+            echo "COLLECTOR_TRIGGER_SECRET secret is missing"
+            exit 1
+          fi
+
+          echo "Starting traffic collection..."
+
+          curl --fail-with-body             --show-error             --silent             --max-time 120             --retry 2             --retry-delay 5             --request POST             --header "Authorization: Bearer $COLLECTOR_TRIGGER_SECRET"             "$COLLECT_URL"
+
+          echo ""
+          echo "Traffic collection finished."
